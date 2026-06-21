@@ -6,11 +6,19 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
+# ===============================
+# Page Setup
+# ===============================
+
 st.set_page_config(
     page_title="Netflix Recommendation System",
     layout="wide"
 )
 
+
+# ===============================
+# Netflix Style CSS
+# ===============================
 
 st.markdown("""
 <style>
@@ -75,14 +83,27 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# ===============================
+# Load Data
+# ===============================
+
 @st.cache_data
 def load_data():
     df = pd.read_csv("./data/netflix_titles.csv")
 
+    df["director"] = df["director"].fillna("")
+    df["cast"] = df["cast"].fillna("")
+    df["country"] = df["country"].fillna("")
+    df["listed_in"] = df["listed_in"].fillna("")
+    df["description"] = df["description"].fillna("")
+
+    # Better content feature for recommendation
     df["content"] = (
-        df["listed_in"].fillna("")
-        + " "
-        + df["description"].fillna("")
+        df["listed_in"] + " " +
+        df["description"] + " " +
+        df["director"] + " " +
+        df["cast"] + " " +
+        df["country"]
     )
 
     return df
@@ -90,6 +111,10 @@ def load_data():
 
 df = load_data()
 
+
+# ===============================
+# Build Recommendation Model
+# ===============================
 
 @st.cache_resource
 def build_model(data):
@@ -116,26 +141,54 @@ def build_model(data):
 cosine_sim, indices = build_model(df)
 
 
+# ===============================
+# Recommendation Function
+# ===============================
+
 def recommend_for_new_user(user_ratings, n=10):
-    liked_movie_indices = []
+    weighted_scores = []
+    total_weight = 0
 
     for title, rating in user_ratings.items():
-        if title in indices:
-            liked_movie_indices.append(indices[title])
 
-    if len(liked_movie_indices) == 0:
+        if title in indices:
+            movie_idx = indices[title]
+
+            # Convert rating into preference weight
+            # 1 star = strong dislike
+            # 2 star = dislike
+            # 3 star = neutral
+            # 4 star = like
+            # 5 star = strong like
+            weight = rating - 3
+
+            # Ignore neutral ratings
+            if weight != 0:
+                weighted_scores.append(
+                    cosine_sim[movie_idx] * weight
+                )
+
+                total_weight += abs(weight)
+
+    if len(weighted_scores) == 0:
         return pd.DataFrame()
 
-    similarity_scores = cosine_sim[liked_movie_indices]
-    avg_similarity_scores = similarity_scores.mean(axis=0)
+    final_scores = sum(weighted_scores) / total_weight
 
     scores = pd.Series(
-        avg_similarity_scores,
+        final_scores,
         index=df.index
     )
 
+    # Remove movies already selected by user
+    selected_indices = []
+
+    for title in user_ratings.keys():
+        if title in indices:
+            selected_indices.append(indices[title])
+
     scores = scores.drop(
-        labels=liked_movie_indices,
+        labels=selected_indices,
         errors="ignore"
     )
 
@@ -151,6 +204,10 @@ def recommend_for_new_user(user_ratings, n=10):
     ]]
 
 
+# ===============================
+# Session State
+# ===============================
+
 if "users" not in st.session_state:
     st.session_state.users = {}
 
@@ -160,6 +217,10 @@ if "logged_in" not in st.session_state:
 if "current_user" not in st.session_state:
     st.session_state.current_user = ""
 
+
+# ===============================
+# Header
+# ===============================
 
 st.markdown(
     "<div class='main-title'>NETFLIX RECOMMENDER</div>",
@@ -171,6 +232,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
+# ===============================
+# Login / Sign Up Page
+# ===============================
 
 if not st.session_state.logged_in:
 
@@ -226,6 +291,10 @@ if not st.session_state.logged_in:
     st.stop()
 
 
+# ===============================
+# Main App After Login
+# ===============================
+
 st.sidebar.success(
     f"Logged in as {st.session_state.current_user}"
 )
@@ -239,7 +308,7 @@ if st.sidebar.button("Logout"):
 st.subheader("Choose 3 Movies or Shows You Like")
 
 
-# Clean movie names for display, but keep original names for recommendation
+# Clean movie names for display but keep original names for recommendation
 movie_map = {
     title.replace("#", ""): title
     for title in sorted(df["title"].unique())
@@ -293,6 +362,10 @@ with col3:
     )
 
 
+# ===============================
+# Recommendation Button
+# ===============================
+
 if st.button("Recommend Movies"):
 
     new_user = {
@@ -308,15 +381,21 @@ if st.button("Recommend Movies"):
 
     st.subheader("Recommended For You")
 
-    for _, row in recommendations.iterrows():
+    if recommendations.empty:
+        st.warning(
+            "Please give at least one movie a rating above or below 3."
+        )
 
-        clean_title = row["title"].replace("#", "")
+    else:
+        for _, row in recommendations.iterrows():
 
-        st.markdown(f"""
-        <div class="movie-card">
-            <div class="movie-title">{clean_title}</div>
-            <p><b>Type:</b> {row['type']}</p>
-            <p class="genre">{row['listed_in']}</p>
-            <p class="description">{row['description']}</p>
-        </div>
-        """, unsafe_allow_html=True)
+            clean_title = row["title"].replace("#", "")
+
+            st.markdown(f"""
+            <div class="movie-card">
+                <div class="movie-title">{clean_title}</div>
+                <p><b>Type:</b> {row['type']}</p>
+                <p class="genre">{row['listed_in']}</p>
+                <p class="description">{row['description']}</p>
+            </div>
+            """, unsafe_allow_html=True)
