@@ -175,10 +175,6 @@ Netflix-Recommendation-System/
 
 ├── README.md
 
-│
-
-└── assets/
-
 
 ## Run Locally
 
