@@ -113,21 +113,43 @@ st.markdown("""
     margin-bottom: 22px;
 }
 
-/* Input panel */
-.input-panel {
-    background: rgba(24,24,24,0.88);
-    padding: 22px;
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.10);
-    min-height: 170px;
-    box-shadow: 0 14px 45px rgba(0,0,0,0.30);
+/* Selection section */
+.pick-title {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 850;
+    margin-bottom: 5px;
 }
 
-.panel-number {
-    color: #e50914;
-    font-weight: 900;
+.pick-subtitle {
+    color: #a9a9a9;
     font-size: 13px;
-    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.taste-summary {
+    background: rgba(24,24,24,0.88);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-top: 24px;
+    color: #d8d8d8;
+}
+
+.taste-summary b {
+    color: #ffffff;
+    margin-right: 10px;
+}
+
+.taste-summary span {
+    display: inline-block;
+    background: rgba(229,9,20,0.16);
+    border: 1px solid rgba(229,9,20,0.30);
+    color: #f1f1f1;
+    padding: 6px 10px;
+    border-radius: 999px;
+    margin: 5px 6px;
+    font-size: 13px;
 }
 
 /* Recommendation cards */
@@ -459,62 +481,76 @@ movie_map = {
 movie_titles = list(movie_map.keys())
 
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns(3, gap="large")
 
 with col1:
-    st.markdown("<div class='input-panel'><div class='panel-number'>TITLE 01</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='pick-title'>🎬 Movie / Show 01</div>
+    <div class='pick-subtitle'>Choose one title you liked or disliked.</div>
+    """, unsafe_allow_html=True)
 
     movie1 = st.selectbox(
-        "Movie / Show 1",
+        "Select first title",
         movie_titles,
-        index=0
+        index=0,
+        label_visibility="collapsed"
     )
 
     rating1 = st.slider(
-        f"Rate {movie1}",
+        f"Your rating for {movie1}",
         1,
         5,
         5
     )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
 with col2:
-    st.markdown("<div class='input-panel'><div class='panel-number'>TITLE 02</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='pick-title'>🎥 Movie / Show 02</div>
+    <div class='pick-subtitle'>A higher rating gives stronger influence.</div>
+    """, unsafe_allow_html=True)
 
     movie2 = st.selectbox(
-        "Movie / Show 2",
+        "Select second title",
         movie_titles,
-        index=1
+        index=1,
+        label_visibility="collapsed"
     )
 
     rating2 = st.slider(
-        f"Rate {movie2}",
+        f"Your rating for {movie2}",
         1,
         5,
         4
     )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
 with col3:
-    st.markdown("<div class='input-panel'><div class='panel-number'>TITLE 03</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='pick-title'>🍿 Movie / Show 03</div>
+    <div class='pick-subtitle'>A 1-star rating reduces similar suggestions.</div>
+    """, unsafe_allow_html=True)
 
     movie3 = st.selectbox(
-        "Movie / Show 3",
+        "Select third title",
         movie_titles,
-        index=2
+        index=2,
+        label_visibility="collapsed"
     )
 
     rating3 = st.slider(
-        f"Rate {movie3}",
+        f"Your rating for {movie3}",
         1,
         5,
         3
     )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
+st.markdown(f"""
+<div class="taste-summary">
+    <b>Your taste profile:</b>
+    <span>{movie1} — {rating1}★</span>
+    <span>{movie2} — {rating2}★</span>
+    <span>{movie3} — {rating3}★</span>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
