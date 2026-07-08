@@ -243,7 +243,7 @@ hr {
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("./data/netflix_titles.csv")
+    df = pd.read_csv("./data/processed/netflix_cleaned.csv")
 
     df["director"] = df["director"].fillna("")
     df["cast"] = df["cast"].fillna("")
